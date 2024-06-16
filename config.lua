@@ -402,12 +402,12 @@ Config.Animations = {
         Body = 'door_deal_wait_buyer',
     },
     {
-        Label = 'Cross arms',
+        Label = 'Cross Arms',
         Category = 'Gestures',    -- 'Gestures', 'Dances', 'Emotes'
         Type = 'Anim',  -- 'Anim', 'Emote', 'Scenario'
         Dict = 'mech_skin@buck@butcher',
         Body = 'trans_to_stoic_butcher',
-        Flag = 31,
+        Flag = 30,
     },
     {
         Label = 'Hands side',
