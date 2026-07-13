@@ -22,8 +22,8 @@ local function normalizeBodyOption(bodyOption)
 
     bodyOption = bodyOption:lower()
 
-    if bodyOption == 'half' or bodyOption == 'upper' then
-        return 'half'
+    if bodyOption == 'upper' then
+        return 'upper'
     end
 
     return 'full'
@@ -46,7 +46,7 @@ local function findAnimation(animationName)
 end
 
 local function playEmote(emoteType, bodyMode)
-    if bodyMode == 'half' then
+    if bodyMode == 'upper' then
         Citizen.InvokeNative(0xB31A277C1AC7B7FF, cache.ped, 0, 0, joaat(emoteType), 1, 1, 0, 0, 0)
         return
     end
@@ -62,14 +62,14 @@ local function playAnimationByName(animationName, bodyOption)
         return false, ('Animation "%s" was not found'):format(tostring(animationName))
     end
 
-    if bodyMode == 'half' then
+    if bodyMode == 'upper' then
         ClearPedSecondaryTask(cache.ped)
     else
         ClearPedTasks(cache.ped)
     end
 
     if animation.Type == 'Anim' and animation.Dict and animation.Body then
-        local flags = bodyMode == 'half' and (animation.HalfBodyFlag or 31) or (animation.FullBodyFlag or animation.Flag or 0)
+        local flags = bodyMode == 'upper' and (animation.HalfBodyFlag or 31) or (animation.FullBodyFlag or animation.Flag or 0)
         playAnim(animation.Dict, animation.Body, -1, flags)
         return true
     end
@@ -88,3 +88,8 @@ local function playAnimationByName(animationName, bodyOption)
 end
 
 exports('PlayAnimation', playAnimationByName)
+
+-- exports['rsg-animations']:PlayAnimation('Wave', 'full')
+-- animation does the full body.
+-- exports['rsg-animations']:PlayAnimation('Wave', 'upper')
+-- animation does only the upper of the body. Allows animations to be done on horse and other positions.
