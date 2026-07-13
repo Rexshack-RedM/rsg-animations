@@ -11,6 +11,24 @@ local function playAnim(animDict, animName, duration, flags, introtiming, exitti
     RemoveAnimDict(animDict)
 end
 
+local function normalizeBodyOption(bodyOption)
+    if type(bodyOption) == 'table' then
+        bodyOption = bodyOption.body
+    end
+
+    if type(bodyOption) ~= 'string' or bodyOption == '' then
+        return 'full'
+    end
+
+    bodyOption = bodyOption:lower()
+
+    if bodyOption == 'half' or bodyOption == 'upper' then
+        return 'half'
+    end
+
+    return 'full'
+end
+
 local function findAnimation(animationName)
     if type(animationName) ~= 'string' or animationName == '' then
         return nil
@@ -27,22 +45,37 @@ local function findAnimation(animationName)
     return nil
 end
 
-local function playAnimationByName(animationName)
+local function playEmote(emoteType, bodyMode)
+    if bodyMode == 'half' then
+        Citizen.InvokeNative(0xB31A277C1AC7B7FF, cache.ped, 0, 0, joaat(emoteType), 1, 1, 0, 0, 0)
+        return
+    end
+
+    Citizen.InvokeNative(0xB31A277C1AC7B7FF, cache.ped, 0, 2, joaat(emoteType), 0, 0, 0, 0, 0)
+end
+
+local function playAnimationByName(animationName, bodyOption)
     local animation = findAnimation(animationName)
+    local bodyMode = normalizeBodyOption(bodyOption)
 
     if not animation then
         return false, ('Animation "%s" was not found'):format(tostring(animationName))
     end
 
-    ClearPedTasks(cache.ped)
+    if bodyMode == 'half' then
+        ClearPedSecondaryTask(cache.ped)
+    else
+        ClearPedTasks(cache.ped)
+    end
 
     if animation.Type == 'Anim' and animation.Dict and animation.Body then
-        playAnim(animation.Dict, animation.Body, -1, animation.Flag or 0)
+        local flags = bodyMode == 'half' and (animation.HalfBodyFlag or 31) or (animation.FullBodyFlag or animation.Flag or 0)
+        playAnim(animation.Dict, animation.Body, -1, flags)
         return true
     end
 
     if animation.Type == 'Emote' and animation.EmoteType then
-        TaskEmote(cache.ped, 0, 2, joaat(animation.EmoteType), true, true, true, true, true)
+        playEmote(animation.EmoteType, bodyMode)
         return true
     end
 
