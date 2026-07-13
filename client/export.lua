@@ -89,6 +89,7 @@ end
 
 exports('PlayAnimation', playAnimationByName)
 
+-- exports['rsg-animations']:PlayAnimation('Wave') -- defaults to full
 -- exports['rsg-animations']:PlayAnimation('Wave', 'full')
 -- animation does the full body.
 -- exports['rsg-animations']:PlayAnimation('Wave', 'upper')
