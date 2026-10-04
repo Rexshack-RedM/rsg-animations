@@ -1,43 +1,56 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <meta charset="utf-8" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <div id="app">
-      <Transition :duration="550" name="nested">
-        <div class="menu" v-show="Show">
-          <div class="categories">
-            <div id="gestures-icon" @click="FilterCategory('Gestures')" v-bind:style="{ opacity: selectedCategory === 'Gestures' ? '0.6' : '1' }"></div>
-            <div id="dances-icon" @click="FilterCategory('Dances')" v-bind:style="{ opacity: selectedCategory === 'Dances' ? '0.6' : '1' }"></div>
-            <div id="emotes-icon" @click="FilterCategory('Emotes')" v-bind:style="{ opacity: selectedCategory === 'Emotes' ? '0.6' : '1' }"></div>
-            <div id="favorites-icon" @click="FilterCategory('Favorites')" v-bind:style="{ opacity: selectedCategory === 'Favorites' ? '0.6' : '1' }"></div>
+    <div id="app" v-cloak>
+      <div class="panel" v-if="Show">
+        <header class="panel-header">
+          <div class="header-spacer"></div>
+          <div class="header-text">
+            <h1>{{ Locale.title }}</h1>
+            <p class="subtitle">{{ Locale.subtitle }}</p>
           </div>
-  
-          <div class="start-separator"></div>
+          <button class="circle-btn" @click="Close()" :title="Locale.close">&#x2715;</button>
+        </header>
 
-          <input type="text" v-model="searchQuery" class="search-input" placeholder=". . .">
-          
-          <div class="animations">
-            <ul>
-              <li class="listbox" v-for="(Animation, index) in FilteredAnimations" :key="index" @click="StartAnim(Animation)" @click.right="Favorite(Animation)">
-                <div>
-                  <div class="list-labels">
-                    <p>{{ Animation.Label }}</p>
-                  </div>
-                </div>
-                <div id="animation-favorites-icon" v-bind:style="{ opacity: Animation.Favorite ? '1' : '0.4' }"></div>
-              </li>
-            </ul>
-          </div>
+        <div class="divider"><span>&#9670;</span></div>
 
-          <div class="end-separator"></div>
-          <div class="stop-anim" @click="StopAnim()"></div>
+        <nav class="tabs">
+          <button class="tab" :class="{ active: !selectedCategory }" @click="FilterCategory(null)">{{ Locale.all }}</button>
+          <button v-for="cat in Categories" :key="cat.key" class="tab" :class="{ active: selectedCategory === cat.key }" @click="FilterCategory(cat.key)">{{ Locale[cat.locale] }}</button>
+        </nav>
+
+        <input type="text" v-model="searchQuery" class="search-input" ref="search" :placeholder="Locale.searchPlaceholder">
+
+        <ul class="list">
+          <li class="row" v-for="Animation in FilteredAnimations" :key="Animation.Label"
+              @click="StartAnim(Animation)" @click.right.prevent="Favorite(Animation)" :title="Locale.favoriteHint">
+            <div class="badge-icon">{{ TypeIcon(Animation.Type) }}</div>
+            <div class="row-text">
+              <span class="row-title">{{ Animation.DisplayLabel || Animation.Label }}</span>
+              <span class="row-desc">{{ CategoryLabel(Animation.Category) }}</span>
+            </div>
+            <button class="star" :class="{ on: Animation.Favorite }" @click.stop="Favorite(Animation)">&#9733;</button>
+          </li>
+          <li class="row empty" v-if="FilteredAnimations.length === 0">
+            <span class="row-desc">{{ Locale.noResults }}</span>
+          </li>
+        </ul>
+
+        <div class="divider"><span>&#9670;</span></div>
+
+        <div class="actions">
+          <button class="wood-btn" @click="StopAnim()">{{ Locale.stopAnimation }}</button>
         </div>
-      </Transition>
+      </div>
     </div>
+    <script src="vendor/vue.js"></script>
+    <script src="app.js"></script>
   </body>
 </html>
-
-<script src="vendor/vue.js"></script>
-<script src="app.js"></script>

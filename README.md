@@ -1,127 +1,135 @@
 <img width="2948" height="497" alt="rsg_framework" src="https://github.com/user-attachments/assets/638791d8-296d-4817-a596-785325c1b83a" />
 
 # 💃 rsg-animations
-**Comprehensive emote & animation system for RedM (RSG Core).**
+**Emote & animation menu for RedM (RSG Core).**
 
 ![Platform](https://img.shields.io/badge/platform-RedM-darkred)
 ![License](https://img.shields.io/badge/license-GPL--3.0-green)
 
-> A modern animation menu for RedM, with UI built in Vue.js, allowing players to play, preview, and save their favorite emotes or scenarios.  
+> A Vue.js animation menu that lets players play gestures, dances, emotes and scenarios, and save their favourites per character.
 
 ---
 
 ## 🛠️ Dependencies
-- **rsg-core** (framework & player data)  
-- **ox_lib** (locale, notifications, context)  
-- **oxmysql** (database handler for favorites)
-
-**License:** GPL‑3.0
+- **rsg-core** – framework & player data
+- **ox_lib** – locales, callbacks, anim dict loading
+- **oxmysql** – favourites storage
 
 ---
 
 ## ✨ Features
-- 💃 **NUI Animation Menu** — modern UI built in Vue.js.  
-- 🎭 **Emotes, Gestures & Scenarios** — categorized for easy browsing.  
-- ⭐ **Favorites System** — players can save their favorite animations (stored via MySQL).  
-- 🔄 **Persistent Favorites** — saved per `citizenid`.  
-- ⚙️ **Supports multiple animation types:**
-  - **Anim** → standard animation dictionary  
-  - **Emote** → RDR2 native emote (e.g. `KIT_EMOTE_GREETING_TIP_HAT`)  
-  - **Scenario** → world scenarios (e.g. `WORLD_HUMAN_SMOKE`)  
-- 🧭 **Open via command or radial menu** (`/anim` by default).  
-- 🗃️ **SQL file included** (`rsg-animations.sql`) to create favorite table automatically.  
-- 🌍 **Locale support** (English, Greek by default).  
-
----
-
-## ⚙️ Configuration (`config.lua`)
-```lua
-Config = {}
-
--- Command used to open the animation menu
-Config.CommandOpen = 'anim'
-
--- Default keybind (optional)
-Config.KeyOpen = 'F3'
-
--- Example animation entries
-Config.Animations = {
-    { 
-        name = "Greeting - Tip Hat", 
-        type = "Emote", 
-        data = "KIT_EMOTE_GREET_TIP_HAT" 
-    },
-    { 
-        name = "Dance - Gentle Shuffle", 
-        type = "Anim", 
-        data = { dict = "amb_work@world_human_drunk_dancing@male_a@idle_a", anim = "idle_a", flag = 1 } 
-    },
-    { 
-        name = "Sit on Chair", 
-        type = "Scenario", 
-        data = "WORLD_HUMAN_SIT_CHAIR" 
-    }
-}
-```
-
----
-
-## 🕹️ Usage
-- Use the command `/anim` to open the animation menu.  
-- Browse through categories (Emotes, Animations, Scenarios).  
-- Click an animation to play it immediately.  
-- Press the ★ icon to **save it as a favorite**.  
-- Access saved favorites easily from the “Favorites” tab.  
-
----
-
-## 💾 Database (Favorites System)
-Run the SQL file `rsg-animations.sql` to create the table for player favorites:
-
-```sql
-CREATE TABLE IF NOT EXISTS favorites_animations (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  citizenid VARCHAR(50) NOT NULL,
-  label VARCHAR(100) NOT NULL,
-  type VARCHAR(50) NOT NULL,
-  data LONGTEXT NOT NULL
-);
-```
-
-Each player’s favorite list is tied to their **Citizen ID**.  
-Favorites are automatically reloaded on login.
-
----
-
-## 🧩 Files
-- `client/client.lua` — handles menu interactions and animation playback  
-- `server/server.lua` — manages favorite storage and SQL communication  
-- `config.lua` — main configuration file  
-- `ui/` — Vue.js front‑end (menu interface)  
-- `rsg-animations.sql` — table creation script  
-- `fxmanifest.lua` — defines NUI and dependencies
+- 💃 **NUI menu** in the RDR2 leather & gold style, with category filters (Gestures, Dances, Emotes, Favourites) and live search
+- ⭐ **Favourites** – right-click a row or click the star; saved per `citizenid` and cached client-side
+- 🎭 **Three animation types** – `Anim` (dictionary), `Emote` (native kit emote), `Scenario` (world scenario)
+- 🧍 **Full or upper-body playback** via the export (upper body works on horseback)
+- 🌍 **Translated** – en, de, el, es, fr, ja, nl, pl, pt-br, ro (menu text *and* animation names)
+- 🔒 **Server-validated favourites** – only labels from the config are stored, capped and rate-limited
 
 ---
 
 ## 📂 Installation
-1. Place `rsg-animations` in your `resources/[rsg]` folder.  
-2. Import `rsg-animations.sql` into your database.  
-3. Add to your `server.cfg`:
+1. Place `rsg-animations` in your `resources/[rsg]` folder.
+2. Import `installation/rsg-animations.sql`.
+3. Add to `server.cfg` (after its dependencies):
    ```cfg
    ensure ox_lib
    ensure oxmysql
    ensure rsg-core
    ensure rsg-animations
    ```
-4. Restart your server.  
-5. Use `/anim` in-game to open the menu.
+4. Restart the server and use `/anim` in-game.
+
+---
+
+## 🌍 Language
+Set the ox_lib locale in `server.cfg`:
+```cfg
+setr ox:locale "en"   # en, de, el, es, fr, ja, nl, pl, pt-br, ro
+```
+Translations live in `locales/*.json`. Animation names use the key `anim_<label>` (lower-case, non-alphanumerics replaced with `_`), e.g. `Tip hat` → `anim_tip_hat`. If a key is missing the config `Label` is shown.
+
+---
+
+## ⚙️ Configuration (`shared/config.lua`)
+```lua
+Config.CommandOpen = 'anim' -- command that opens the menu
+
+Config.Animations = {
+    {
+        Label = 'Tip hat',         -- unique id (used for favourites, export & locale key)
+        Category = 'Emotes',       -- 'Gestures' | 'Dances' | 'Emotes'
+        Type = 'Emote',            -- 'Anim' | 'Emote' | 'Scenario'
+        EmoteType = 'KIT_EMOTE_GREET_HAT_TIP_1',
+    },
+    {
+        Label = 'Cross Arms',
+        Category = 'Gestures',
+        Type = 'Anim',
+        Dict = 'mech_skin@buck@butcher',
+        Body = 'trans_to_stoic_butcher',
+        Flag = 30,                 -- optional; FullBodyFlag / HalfBodyFlag override per mode
+    },
+    {
+        Label = 'Example scenario',
+        Category = 'Gestures',
+        Type = 'Scenario',
+        Scenario = 'WORLD_HUMAN_SIT_GROUND',
+    },
+}
+```
+> ⚠️ `Label` must be unique. Renaming a label removes it from players' saved favourites.
+
+---
+
+## 🧩 Exports (client)
+```lua
+-- play by label; body = 'full' (default) or 'upper'
+local ok, err = exports['rsg-animations']:PlayAnimation('Wave')
+exports['rsg-animations']:PlayAnimation('Wave', 'upper')
+
+-- stop whatever is playing
+exports['rsg-animations']:StopAnimation()
+```
+
+---
+
+## 🕹️ Usage
+- `/anim` opens the menu, **Esc** closes it.
+- Left-click a row to play; right-click or click the star to (un)favourite.
+- The bottom button stops the current animation.
+
+---
+
+## 💾 Database
+```sql
+CREATE TABLE IF NOT EXISTS `favorites_animations` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `citizenid` varchar(50) NOT NULL,
+  `favorites` longtext NOT NULL DEFAULT ('[]'),
+  PRIMARY KEY (`id`),
+  KEY `citizenid` (`citizenid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+```
+Existing installs can add the index with:
+```sql
+ALTER TABLE `favorites_animations` ADD INDEX `citizenid` (`citizenid`);
+```
+
+---
+
+## 🗂️ Files
+- `client/client.lua` – menu, NUI callbacks, playback & exports
+- `server/server.lua` – favourites storage & validation
+- `server/versionchecker.lua` – GitHub version check
+- `shared/config.lua` – command & animation list
+- `locales/*.json` – translations
+- `ui/` – Vue.js front-end
+- `installation/rsg-animations.sql` – table
 
 ---
 
 ## 💎 Credits
-- **XakraD** — Original creator  
-  🔗 https://github.com/XakraD  
-- **RSG / Rexshack‑RedM** — adaptation & maintenance  
-  🔗 https://github.com/Rexshack-RedM  
-- **Community contributors & translators**  
-- License: GPL‑3.0
+- **XakraD** — original creator · https://github.com/XakraD
+- **RSG / Rexshack-RedM** — adaptation & maintenance · https://github.com/Rexshack-RedM
+- Community contributors & translators
+- License: GPL-3.0

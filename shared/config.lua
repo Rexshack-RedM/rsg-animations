@@ -439,7 +439,7 @@ Config.Animations = {
         Flag = 31,
     },
     {
-        Label = 'Careless',
+        Label = 'Careless 2',
         Category = 'Gestures',
         Type = 'Anim',
         Dict = 'amb_misc@world_human_waiting_impatient@male_d@idle_b',
@@ -929,7 +929,7 @@ Config.Animations = {
         EmoteType = 'KIT_EMOTE_ACTION_FOLLOW_ME_1',
     },
     {
-        Label = 'Angry',
+        Label = 'Hissy fit',
         Category = 'Emotes',
         Type = 'Emote',
         EmoteType = 'KIT_EMOTE_ACTION_HISSYFIT_1',
@@ -1097,7 +1097,7 @@ Config.Animations = {
         EmoteType = 'KIT_EMOTE_ACTION_NEWTHREADS_1',
     },
     {
-        Label = 'Point',
+        Label = 'Point emote',
         Category = 'Emotes',
         Type = 'Emote',
         EmoteType = 'KIT_EMOTE_ACTION_POINT_1',
@@ -1307,7 +1307,7 @@ Config.Animations = {
         EmoteType = 'KIT_EMOTE_REACTION_PHEW_1',
     },
     {
-        Label = 'Scared',
+        Label = 'Scared emote',
         Category = 'Emotes',
         Type = 'Emote',
         EmoteType = 'KIT_EMOTE_REACTION_SCARED_1',
@@ -1349,7 +1349,7 @@ Config.Animations = {
         EmoteType = 'KIT_EMOTE_REACTION_SOB_1',
     },
     {
-        Label = 'Surrender',
+        Label = 'Surrender emote',
         Category = 'Emotes',
         Type = 'Emote',
         EmoteType = 'KIT_EMOTE_REACTION_SURRENDER_1',

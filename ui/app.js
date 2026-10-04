@@ -1,134 +1,83 @@
 const { createApp } = Vue
 
+const post = (endpoint, data = {}) =>
+  fetch(`https://${GetParentResourceName()}/${endpoint}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json; charset=UTF-8' },
+    body: JSON.stringify(data),
+  }).catch(() => {})
+
 createApp({
   data() {
     return {
       Show: false,
-      Animations: {},
+      Animations: [],
+      Locale: {},
       searchQuery: '',
-      selectedCategory: false,
+      selectedCategory: null,
+      Categories: [
+        { key: 'Gestures', locale: 'gestures' },
+        { key: 'Dances', locale: 'dances' },
+        { key: 'Emotes', locale: 'emotes' },
+        { key: 'Favorites', locale: 'favorites' },
+      ],
     }
   },
   mounted() {
-    window.addEventListener("message", this.Message);
-    window.addEventListener("keydown", this.onKeypress);
-  },
-  destroyed() {
-    window.removeEventListener("message");
-    window.removeEventListener('keydown');
+    window.addEventListener('message', this.Message)
+    window.addEventListener('keydown', this.onKeypress)
   },
   computed: {
     FilteredAnimations() {
-      let filtered = this.Animations;
-      if (this.selectedCategory) {
-        if (this.selectedCategory === 'Favorites') {
-          filtered = filtered.filter(Animation => Animation.Favorite);
-        } else {
-          filtered = filtered.filter(Animation => Animation.Category === this.selectedCategory);
-        }
+      let filtered = this.Animations
+      if (this.selectedCategory === 'Favorites') {
+        filtered = filtered.filter(a => a.Favorite)
+      } else if (this.selectedCategory) {
+        filtered = filtered.filter(a => a.Category === this.selectedCategory)
       }
-      if (this.searchQuery.trim()) {
-        filtered = filtered.filter(Animation => Animation.Label.toLowerCase().includes(this.searchQuery.toLowerCase()));
+      const query = this.searchQuery.trim().toLowerCase()
+      if (query) {
+        filtered = filtered.filter(a => (a.DisplayLabel || a.Label).toLowerCase().includes(query))
       }
-      return filtered;
-    }
+      return filtered
+    },
   },
   methods: {
     Message(event) {
-      switch(event.data.type) {
-        case "Open":
-          this.Show = true
-          this.Animations = event.data.Animations
-
-          break;
-
-        case "Close":
-          this.Close()
-          break;
+      if (event.data.type === 'Open') {
+        this.Animations = event.data.Animations || []
+        this.Locale = event.data.Locale || {}
+        this.Show = true
+        this.$nextTick(() => this.$refs.search && this.$refs.search.focus())
       }
+    },
+    TypeIcon(type) {
+      return type === 'Emote' ? '\u263A' : type === 'Scenario' ? '\u2691' : '\u2726'
+    },
+    CategoryLabel(category) {
+      const cat = this.Categories.find(c => c.key === category)
+      return cat ? this.Locale[cat.locale] : category
     },
     StartAnim(Animation) {
-      if (Animation.Type === "Anim") {
-        fetch(`https://${GetParentResourceName()}/Anim`, {
-          method: 'POST',
-          body: JSON.stringify({
-            Animation,
-          })
-        }).then(resp => resp.json()).then(resp => {
-    
-        }).catch(function(error) {
-          // console.warn(error);
-        })
-
-      } else if (Animation.Type === "Emote") {
-        fetch(`https://${GetParentResourceName()}/Emote`, {
-          method: 'POST',
-          body: JSON.stringify({
-            Animation,
-          })
-        }).then(resp => resp.json()).then(resp => {
-    
-        }).catch(function(error) {
-          // console.warn(error);
-        })
-      } else if (Animation.Type === "Scenario") {
-        fetch(`https://${GetParentResourceName()}/Scenario`, {
-          method: 'POST',
-          body: JSON.stringify({
-            Animation,
-          })
-        }).then(resp => resp.json()).then(resp => {
-    
-        }).catch(function(error) {
-          // console.warn(error);
-        })
-      }
+      post('Play', { label: Animation.Label })
     },
     StopAnim() {
-      fetch(`https://${GetParentResourceName()}/StopAnim`, {
-        method: 'POST',
-      }).then(resp => resp.json()).then(resp => {
-    
-      }).catch(function(error) {
-        // console.warn(error);
-      })
+      post('StopAnim')
     },
     onKeypress(event) {
-      if (event.key === "Escape" || event.key === "esc") {
-        this.Close()
-      }
+      if (this.Show && event.key === 'Escape') this.Close()
     },
     FilterCategory(category) {
-      if (this.selectedCategory == category) {
-        this.selectedCategory = null;
-      } else {
-        this.selectedCategory = category;
-      }
+      this.selectedCategory = this.selectedCategory === category ? null : category
     },
     Favorite(Animation) {
-      Animation.Favorite = !Animation.Favorite;
-
-      fetch(`https://${GetParentResourceName()}/Favorite`, {
-        method: 'POST',
-        body: JSON.stringify({
-          Animation,
-          Favorite: Animation.Favorite,
-        })
-      }).then(resp => resp.json()).then(resp => {
-    
-      }).catch(function(error) {
-        // console.warn(error);
-      })
+      Animation.Favorite = !Animation.Favorite
+      post('Favorite', { label: Animation.Label, favorite: Animation.Favorite })
     },
     Close() {
       this.Show = false
-      fetch(`https://${GetParentResourceName()}/Close`, {
-        method: 'POST',
-      }).then(resp => resp.json()).then(resp => {
-    
-      }).catch(function(error) {
-        // console.warn(error);
-      })
+      this.searchQuery = ''
+      post('Close')
     },
   },
 }).mount('#app')

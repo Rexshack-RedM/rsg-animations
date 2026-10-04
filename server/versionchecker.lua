@@ -34,7 +34,7 @@ end
 local function CheckVersion()
     local currentVersion = GetResourceMetadata(resourceName, 'version')
     if not currentVersion then
-        printLog('error', 'Unable to read current resource version from fxmanifest.lua!')
+        printLog('error', locale('ver_read_failed'))
         return
     end
 
@@ -42,12 +42,12 @@ local function CheckVersion()
 
     PerformHttpRequest(versionUrl, function(statusCode, remoteVersion, headers)
         if statusCode ~= 200 then
-            printLog('error', ('Version check failed (HTTP %s). Check your internet or the GitHub URL.'):format(statusCode))
+            printLog('error', locale('ver_http_failed'):format(statusCode))
             return
         end
 
         if not remoteVersion or remoteVersion == '' then
-            printLog('error', 'Received empty version data from GitHub.')
+            printLog('error', locale('ver_empty_data'))
             return
         end
 
@@ -55,15 +55,15 @@ local function CheckVersion()
         remoteVersion = remoteVersion:gsub('%s+$', '')
 
         if currentVersion == remoteVersion then
-            printLog('success', 'You are running the latest version!')
+            printLog('success', locale('ver_latest'))
             return
         end
 
         if isVersionOutdated(currentVersion, remoteVersion) then
-            printLog('error', ('OUTDATED! Please update to version %s'):format(remoteVersion))
-            printLog('error', 'Download from: https://github.com/Rexshack-RedM/'..GetCurrentResourceName()..'')
+            printLog('error', locale('ver_outdated'):format(remoteVersion))
+            printLog('error', locale('ver_download'):format('https://github.com/Rexshack-RedM/' .. GetCurrentResourceName()))
         else
-            printLog('warning', ('You are running a newer version (%s) than the remote (%s). Possible dev build?'):format(currentVersion, remoteVersion))
+            printLog('warning', locale('ver_newer'):format(currentVersion, remoteVersion))
         end
     end, 'GET')
 end
