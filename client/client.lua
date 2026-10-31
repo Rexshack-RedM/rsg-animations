@@ -1,3 +1,4 @@
+local RSGCore = exports['rsg-core']:GetCoreObject()
 local isMenuOpen = false
 local favorites = nil -- [label] = true, loaded once from the server
 
@@ -47,30 +48,28 @@ end
 -- playback
 ---------------------------------
 local function playAnim(animDict, animName, flags)
-    local ok = pcall(lib.requestAnimDict, animDict, 1500)
-    if not ok or not HasAnimDictLoaded(animDict) then return false end
+    -- rsg-core errors on an invalid dict or timeout, so guard it
+    if not pcall(RSGCore.Functions.RequestAnimDict, animDict, 1500) then return false end
 
-    TaskPlayAnim(cache.ped, animDict, animName, 1.0, 1.0, -1, flags or 0, 0, false, false, false, 0, true)
+    TaskPlayAnim(PlayerPedId(), animDict, animName, 1.0, 1.0, -1, flags or 0, 0, false, false, false, 0, true)
     RemoveAnimDict(animDict)
     return true
 end
 
 local function playEmote(emoteType, bodyMode)
-    if bodyMode == 'upper' then
-        Citizen.InvokeNative(0xB31A277C1AC7B7FF, cache.ped, 0, 0, joaat(emoteType), 1, 1, 0, 0, 0)
-    else
-        Citizen.InvokeNative(0xB31A277C1AC7B7FF, cache.ped, 0, 2, joaat(emoteType), 0, 0, 0, 0, 0)
-    end
+    -- TASK_PLAY_EMOTE_WITH_HASH (0xB31A277C1AC7B7FF): playbackMode 0 = upper body, 2 = full body
+    local upper = bodyMode == 'upper'
+    Citizen.InvokeNative(0xB31A277C1AC7B7FF, PlayerPedId(), 0, upper and 0 or 2, joaat(emoteType), upper, upper, false, false, false)
     return true
 end
 
 local function stopAnimation()
-    ClearPedTasks(cache.ped)
-    ClearPedSecondaryTask(cache.ped)
+    ClearPedTasks(PlayerPedId())
+    ClearPedSecondaryTask(PlayerPedId())
 end
 
 local function canAnimate()
-    local ped = cache.ped
+    local ped = PlayerPedId()
     return not IsEntityDead(ped) and not IsPedRagdoll(ped) and not IsPedFalling(ped) and not IsPedSwimming(ped)
 end
 
@@ -90,16 +89,16 @@ local function playAnimationByName(animationName, bodyOption)
         return false, locale('err_anim_not_found'):format(animationName)
     end
 
-    if not canAnimate() then return false end
+    if not canAnimate() then return false, locale('err_cannot_animate') end
 
     local bodyMode = normalizeBodyOption(bodyOption)
     -- scenarios are always full body
     if animation.Type == 'Scenario' then bodyMode = 'full' end
 
     if bodyMode == 'upper' then
-        ClearPedSecondaryTask(cache.ped)
+        ClearPedSecondaryTask(PlayerPedId())
     else
-        ClearPedTasks(cache.ped)
+        ClearPedTasks(PlayerPedId())
     end
 
     if animation.Type == 'Anim' and animation.Dict and animation.Body then
@@ -108,7 +107,7 @@ local function playAnimationByName(animationName, bodyOption)
     elseif animation.Type == 'Emote' and animation.EmoteType then
         return playEmote(animation.EmoteType, bodyMode)
     elseif animation.Type == 'Scenario' and animation.Scenario then
-        TaskStartScenarioInPlace(cache.ped, joaat(animation.Scenario), -1, true, false, false, false)
+        TaskStartScenarioInPlace(PlayerPedId(), joaat(animation.Scenario), -1, true, false, false, false)
         return true
     end
 
@@ -133,7 +132,7 @@ local function openMenu()
 
     if not favorites then
         favorites = {}
-        local list = lib.callback.await('rsg-animations:server:getFavorites', false) or {}
+        local list = RSGCore.Functions.AwaitCallback('rsg-animations:server:getFavorites', 5000) or {}
         for _, label in ipairs(list) do favorites[label] = true end
     end
 
@@ -175,7 +174,10 @@ end)
 RegisterNUICallback('Play', function(data, cb)
     cb('ok')
     if type(data) == 'table' and type(data.label) == 'string' then
-        playAnimationByName(data.label)
+        local ok, err = playAnimationByName(data.label)
+        if not ok and err then
+            RSGCore.Functions.Notify({ title = locale('ui_title'), description = err, type = 'error' })
+        end
     end
 end)
 
@@ -197,4 +199,11 @@ RegisterNUICallback('Favorite', function(data, cb)
     local state = data.favorite == true
     favorites[data.label] = state or nil
     TriggerServerEvent('rsg-animations:server:Favorite', data.label, state)
+end)
+
+-- server refused a favourite change (limit / rate limit): restore the real state
+RegisterNetEvent('rsg-animations:client:syncFavorite', function(label, state)
+    if type(label) ~= 'string' then return end
+    if favorites then favorites[label] = state or nil end
+    SendNUIMessage({ type = 'SetFavorite', label = label, favorite = state == true })
 end)

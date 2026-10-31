@@ -3,10 +3,10 @@ rdr3_warning 'I acknowledge that this is a prerelease build of RedM, and I am aw
 game 'rdr3'
 
 description 'rsg-animations'
-version '3.0.0'
+version '3.0.1'
 
 shared_scripts {
-    '@ox_lib/init.lua',
+    '@rsg-core/shared/locale.lua',
     'shared/config.lua',
 }
 
@@ -22,7 +22,6 @@ server_scripts {
 
 dependencies {
     'rsg-core',
-    'ox_lib',
     'oxmysql',
 }
 
@@ -34,11 +33,3 @@ files {
 ui_page 'ui/index.html'
 
 lua54 'yes'
-ox_lib 'locale'
-
-escrow_ignore {
-    'locales/*',
-    'shared/*',
-    'installation/*',
-    'README.md'
-}

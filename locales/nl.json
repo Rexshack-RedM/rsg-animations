@@ -237,5 +237,7 @@
     "ui_title": "Animaties",
     "ui_subtitle": "Gebaren & emotes",
     "ui_category_all": "Alles",
-    "ui_close": "Sluiten"
+    "ui_close": "Sluiten",
+    "err_max_favorites": "Je kunt maar %d favorieten hebben",
+    "err_cannot_animate": "Dat kun je nu niet doen"
 }

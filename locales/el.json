@@ -237,5 +237,7 @@
     "ui_title": "Κινήσεις",
     "ui_subtitle": "Χειρονομίες & Εκφράσεις",
     "ui_category_all": "Όλα",
-    "ui_close": "Κλείσιμο"
+    "ui_close": "Κλείσιμο",
+    "err_max_favorites": "Μπορείς να έχεις μόνο %d αγαπημένα",
+    "err_cannot_animate": "Δεν μπορείς να το κάνεις αυτό τώρα"
 }

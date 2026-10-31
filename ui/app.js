@@ -49,6 +49,9 @@ createApp({
         this.Locale = event.data.Locale || {}
         this.Show = true
         this.$nextTick(() => this.$refs.search && this.$refs.search.focus())
+      } else if (event.data.type === 'SetFavorite') {
+        const anim = this.Animations.find(a => a.Label === event.data.label)
+        if (anim) anim.Favorite = event.data.favorite
       }
     },
     TypeIcon(type) {

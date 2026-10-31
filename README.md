@@ -11,8 +11,7 @@
 ---
 
 ## 🛠️ Dependencies
-- **rsg-core** – framework & player data
-- **ox_lib** – locales, callbacks, anim dict loading
+- **rsg-core** – framework, player data, callbacks, notifications & locales
 - **oxmysql** – favourites storage
 
 ---
@@ -23,7 +22,8 @@
 - 🎭 **Three animation types** – `Anim` (dictionary), `Emote` (native kit emote), `Scenario` (world scenario)
 - 🧍 **Full or upper-body playback** via the export (upper body works on horseback)
 - 🌍 **Translated** – en, de, el, es, fr, ja, nl, pl, pt-br, ro (menu text *and* animation names)
-- 🔒 **Server-validated favourites** – only labels from the config are stored, capped and rate-limited
+- 🔒 **Server-validated favourites** – only labels from the config are stored, capped at 100 and rate-limited; the server caches each player's list and resyncs the menu if a change is refused
+- 🔔 **Feedback** – rsg-core notifications when an animation can't play (dead, ragdolled, swimming) or the favourite limit is hit
 
 ---
 
@@ -32,7 +32,6 @@
 2. Import `installation/rsg-animations.sql`.
 3. Add to `server.cfg` (after its dependencies):
    ```cfg
-   ensure ox_lib
    ensure oxmysql
    ensure rsg-core
    ensure rsg-animations
@@ -42,9 +41,9 @@
 ---
 
 ## 🌍 Language
-Set the ox_lib locale in `server.cfg`:
+Set the rsg-core locale in `server.cfg` (falls back to `ox:locale`, then `en`):
 ```cfg
-setr ox:locale "en"   # en, de, el, es, fr, ja, nl, pl, pt-br, ro
+setr rsg:locale "en"   # en, de, el, es, fr, ja, nl, pl, pt-br, ro
 ```
 Translations live in `locales/*.json`. Animation names use the key `anim_<label>` (lower-case, non-alphanumerics replaced with `_`), e.g. `Tip hat` → `anim_tip_hat`. If a key is missing the config `Label` is shown.
 
@@ -133,3 +132,7 @@ ALTER TABLE `favorites_animations` ADD INDEX `citizenid` (`citizenid`);
 - **RSG / Rexshack-RedM** — adaptation & maintenance · https://github.com/Rexshack-RedM
 - Community contributors & translators
 - License: GPL-3.0
+
+---
+
+Support: https://buymeacoffee.com/rexshack

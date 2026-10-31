@@ -237,5 +237,7 @@
     "ui_title": "アニメーション",
     "ui_subtitle": "ジェスチャー＆エモート",
     "ui_category_all": "すべて",
-    "ui_close": "閉じる"
+    "ui_close": "閉じる",
+    "err_max_favorites": "お気に入りは%d件までです",
+    "err_cannot_animate": "今はそれができません"
 }

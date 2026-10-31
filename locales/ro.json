@@ -237,5 +237,7 @@
     "ui_title": "Animații",
     "ui_subtitle": "Gesturi și emoții",
     "ui_category_all": "Toate",
-    "ui_close": "Închide"
+    "ui_close": "Închide",
+    "err_max_favorites": "Poți avea doar %d favorite",
+    "err_cannot_animate": "Nu poți face asta acum"
 }

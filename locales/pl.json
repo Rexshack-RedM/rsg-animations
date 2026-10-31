@@ -237,5 +237,7 @@
     "ui_title": "Animacje",
     "ui_subtitle": "Gesty i emotki",
     "ui_category_all": "Wszystko",
-    "ui_close": "Zamknij"
+    "ui_close": "Zamknij",
+    "err_max_favorites": "Możesz mieć tylko %d ulubionych",
+    "err_cannot_animate": "Nie możesz teraz tego zrobić"
 }
