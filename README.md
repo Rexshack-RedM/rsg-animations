@@ -135,4 +135,4 @@ ALTER TABLE `favorites_animations` ADD INDEX `citizenid` (`citizenid`);
 
 ---
 
-Support: https://buymeacoffee.com/rexshack
+Support the Project : https://rexshack.tebex.store/

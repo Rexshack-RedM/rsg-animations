@@ -86,4 +86,4 @@ Only labels that exist in the config are stored, capped at 100 per character and
 | Name shows as the label | Missing `anim_<label>` locale key |
 | Won't play | Player is dead, ragdolled or swimming |
 
-Support: https://buymeacoffee.com/rexshack
+Support the Project : https://rexshack.tebex.store/
