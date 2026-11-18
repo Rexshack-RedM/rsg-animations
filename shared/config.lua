@@ -1,5 +1,8 @@
 Config = {}
 
+-- build the database table automatically on start (set false and import installation/rsg-animations.sql for a manual install)
+Config.AutoDatabase = true
+
 Config.CommandOpen = 'anim'
 
 Config.Animations = {

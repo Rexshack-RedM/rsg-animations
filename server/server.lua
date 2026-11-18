@@ -1,5 +1,24 @@
 local RSGCore = exports['rsg-core']:GetCoreObject()
 
+-- build the favorites table on start (Config.AutoDatabase); manual install: installation/rsg-animations.sql
+MySQL.ready(function()
+    if Config.AutoDatabase == false then return end
+    local ok, err = pcall(MySQL.query.await, [[
+        CREATE TABLE IF NOT EXISTS `favorites_animations` (
+            `id` int(11) NOT NULL AUTO_INCREMENT,
+            `citizenid` varchar(50) NOT NULL,
+            `favorites` longtext NOT NULL DEFAULT ('[]'),
+            PRIMARY KEY (`id`),
+            KEY `citizenid` (`citizenid`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    ]])
+    if ok then
+        print('^2[rsg-animations]^7 database tables ready')
+    else
+        print(('^1[rsg-animations]^7 failed to create database table, import installation/rsg-animations.sql manually: %s'):format(tostring(err)))
+    end
+end)
+
 local MAX_FAVORITES = 100
 local FAVORITE_COOLDOWN = 100 -- ms between favourite writes per player
 

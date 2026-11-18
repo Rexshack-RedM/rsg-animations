@@ -87,3 +87,83 @@ Only labels that exist in the config are stored, capped at 100 per character and
 | Won't play | Player is dead, ragdolled or swimming |
 
 Support the Project : https://rexshack.tebex.store/
+
+<!-- BEGIN AUTO-REFERENCE (generated from the code; re-run the generator instead of editing by hand) -->
+
+## Technical reference
+
+Generated from the source of **rsg-animations 3.0.1**. Names, arguments and defaults below are read straight from the code.
+
+### Dependencies
+
+`rsg-core`, `oxmysql`
+
+### Database
+
+Tables: `favorites_animations`.
+
+Tables are created automatically on start while `Config.AutoDatabase = true` (default). Nothing is ever dropped or overwritten.
+For a manual install set `Config.AutoDatabase = false` and import `installation/rsg-animations.sql` once.
+
+```lua
+-- shared/config.lua
+Config.AutoDatabase = true -- false = import the SQL file yourself
+```
+
+### Configuration
+
+| Option | Default | Notes |
+|---|---|---|
+| `Config.AutoDatabase` | `true` | build the database table automatically on start (set false and import installation/rsg-animations.sql for a ma |
+| `Config.CommandOpen` | `'anim'` |  |
+| `Config.Animations` | `table` |  |
+
+### Exports
+
+**Client**
+
+| Export | Arguments | File |
+|---|---|---|
+| `PlayAnimation` | `` | `client/client.lua` |
+| `StopAnimation` | `` | `client/client.lua` |
+
+```lua
+-- example
+local result = exports['rsg-animations']:PlayAnimation()
+```
+
+### Callbacks
+
+| Callback | Side | Arguments | File |
+|---|---|---|---|
+| `rsg-animations:server:getFavorites` | server | `source, cb` | `server/server.lua` |
+
+```lua
+-- client side
+RSGCore.Functions.TriggerCallback('rsg-animations:server:getFavorites', function(result)
+    -- use result
+end)
+```
+
+### Events
+
+Server events can be fired by any client, so every handler re-validates the player, the arguments and any permission, distance or cooldown on the server. Never add a reward to a handler without those checks.
+
+| Event | Side | Arguments | File |
+|---|---|---|---|
+| `RSGCore:Client:OnPlayerUnload` | client | `` | `client/client.lua` |
+| `rsg-animations:client:syncFavorite` | client | `label, state` | `client/client.lua` |
+| `rsg-animations:server:Favorite` | server | `label, favorite` | `server/server.lua` |
+
+```lua
+-- from a client script
+TriggerServerEvent('rsg-animations:server:Favorite', label, favorite)
+-- from a server script
+TriggerClientEvent('RSGCore:Client:OnPlayerUnload', source)
+```
+
+### Locales
+
+Language files in `locales/`: `de`, `el`, `en`, `es`, `fr`, `ja`, `nl`, `pl`, `pt-br`, `ro`. Set the language with `setr rsg:locale "en"`.
+
+<!-- END AUTO-REFERENCE -->
