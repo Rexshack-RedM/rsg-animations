@@ -21,7 +21,7 @@
 - ⭐ **Favourites** – right-click a row or click the star; saved per `citizenid` and cached client-side
 - 🎭 **Three animation types** – `Anim` (dictionary), `Emote` (native kit emote), `Scenario` (world scenario)
 - 🧍 **Full or upper-body playback** via the export (upper body works on horseback)
-- 🌍 **Translated** – en, de, el, es, fr, ja, nl, pl, pt-br, ro (menu text *and* animation names)
+- 🌍 **Translated** – en, de, el, es, fr, ja, nl, pl, pt-br, ro, ru (menu text *and* animation names)
 - 🔒 **Server-validated favourites** – only labels from the config are stored, capped at 100 and rate-limited; the server caches each player's list and resyncs the menu if a change is refused
 - 🔔 **Feedback** – rsg-core notifications when an animation can't play (dead, ragdolled, swimming) or the favourite limit is hit
 
@@ -43,7 +43,7 @@
 ## 🌍 Language
 Set the rsg-core locale in `server.cfg` (falls back to `ox:locale`, then `en`):
 ```cfg
-setr rsg:locale "en"   # en, de, el, es, fr, ja, nl, pl, pt-br, ro
+setr rsg:locale "en"   # en, de, el, es, fr, ja, nl, pl, pt-br, ro, ru
 ```
 Translations live in `locales/*.json`. Animation names use the key `anim_<label>` (lower-case, non-alphanumerics replaced with `_`), e.g. `Tip hat` → `anim_tip_hat`. If a key is missing the config `Label` is shown.
 

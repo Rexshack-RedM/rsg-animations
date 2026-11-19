@@ -21,7 +21,7 @@
 | `server/versionchecker.lua` | GitHub version check |
 | `ui/` | Vue NUI menu (`index.html`, `app.js`, `style.css`, `vendor/vue.js`) |
 | `installation/rsg-animations.sql` | Manual database install |
-| `locales/*.json` | en, de, el, es, fr, ja, nl, pl, pt-br, ro |
+| `locales/*.json` | en, de, el, es, fr, ja, nl, pl, pt-br, ro, ru |
 
 ## 2. How it works
 - `/anim` opens the menu with category filters (Gestures, Dances, Emotes, Favourites) and live search.
@@ -164,6 +164,6 @@ TriggerClientEvent('RSGCore:Client:OnPlayerUnload', source)
 
 ### Locales
 
-Language files in `locales/`: `de`, `el`, `en`, `es`, `fr`, `ja`, `nl`, `pl`, `pt-br`, `ro`. Set the language with `setr rsg:locale "en"`.
+Language files in `locales/`: `de`, `el`, `en`, `es`, `fr`, `ja`, `nl`, `pl`, `pt-br`, `ro`, `ru`. Set the language with `setr rsg:locale "en"`.
 
 <!-- END AUTO-REFERENCE -->
