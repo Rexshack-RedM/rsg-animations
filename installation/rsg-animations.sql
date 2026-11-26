@@ -3,5 +3,5 @@ CREATE TABLE IF NOT EXISTS `favorites_animations` (
   `citizenid` varchar(50) NOT NULL,
   `favorites` longtext NOT NULL DEFAULT ('[]'),
   PRIMARY KEY (`id`),
-  KEY `citizenid` (`citizenid`)
+  UNIQUE KEY `citizenid` (`citizenid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -1,7 +1,7 @@
 <img width="2948" height="497" alt="rsg_framework" src="https://github.com/user-attachments/assets/638791d8-296d-4817-a596-785325c1b83a" />
 
 # 💃 rsg-animations
-**Emote & animation menu for RedM (RSG Core).**
+**Emote & animation menu for RedM (RSG Core).** · v3.2.1 · [Full docs](DOCS.md)
 
 ![Platform](https://img.shields.io/badge/platform-RedM-darkred)
 ![License](https://img.shields.io/badge/license-GPL--3.0-green)
@@ -18,18 +18,27 @@
 
 ## ✨ Features
 - 💃 **NUI menu** in the RDR2 leather & gold style, with category filters (Gestures, Dances, Emotes, Favourites) and live search
+- 🔢 **Quick slots** – menu bar, `/animslot`, rebindable keys and an `rsg-radialmenu` submenu
+- 💬 **`/e <name>`** – play from chat
+- 🕘 **Recent, now playing and a cancel hint** (Backspace by default)
+- 🚶 **Walk tab** – uses `rsg-radialmenu` walk styles (optional)
+- 🤝 **Shared animations** – ask the closest player; they must accept
+- 👮 **Job / gang restrictions** per animation (optional)
 - ⭐ **Favourites** – right-click a row or click the star; saved per `citizenid` and cached client-side
 - 🎭 **Three animation types** – `Anim` (dictionary), `Emote` (native kit emote), `Scenario` (world scenario)
-- 🧍 **Full or upper-body playback** via the export (upper body works on horseback)
+- 🧍 **Full or upper-body playback** via the menu toggle or export; on a horse or wagon animations are always upper body
+- 🔗 **Restraint-safe** – can't be used to escape cuffs, hogties, lassos or escorting
+- 🎙️ **Push-to-talk** keeps working while the menu is open
+- ⌨️ **Optional keys** to open the menu and stop animations, rebindable in the game's key settings
 - 🌍 **Translated** – en, de, el, es, fr, ja, nl, pl, pt-br, ro, ru (menu text *and* animation names)
 - 🔒 **Server-validated favourites** – only labels from the config are stored, capped at 100 and rate-limited; the server caches each player's list and resyncs the menu if a change is refused
-- 🔔 **Feedback** – rsg-core notifications when an animation can't play (dead, ragdolled, swimming) or the favourite limit is hit
+- 🔔 **Feedback** – rsg-core notifications when an animation can't play (dead, restrained, ragdolled, falling, swimming, scenario while mounted) or the favourite limit is hit
 
 ---
 
 ## 📂 Installation
 1. Place `rsg-animations` in your `resources/[rsg]` folder.
-2. Import `installation/rsg-animations.sql`.
+2. The database table is created automatically on first start (or set `Config.AutoDatabase = false` and import `installation/rsg-animations.sql`).
 3. Add to `server.cfg` (after its dependencies):
    ```cfg
    ensure oxmysql
@@ -51,7 +60,26 @@ Translations live in `locales/*.json`. Animation names use the key `anim_<label>
 
 ## ⚙️ Configuration (`shared/config.lua`)
 ```lua
-Config.CommandOpen = 'anim' -- command that opens the menu
+Config.AutoDatabase = true   -- create the table on start
+Config.CommandOpen = 'anim'  -- command that opens the menu
+Config.UseKeyMapping = true  -- register the two rebindable keys below
+Config.OpenKey = ''          -- key name such as 'F6'; '' = unbound until the player sets it
+Config.StopKey = ''
+Config.AllowPushToTalkWhileOpen = true
+Config.PushToTalkControls = { 0x4BC9DABB }
+Config.CommandPlay = 'e'
+Config.CommandSlot = 'animslot'
+Config.CommandWith = 'animwith'
+Config.QuickSlots = 6
+Config.RadialMenu = true
+Config.RecentLimit = 10
+Config.ShowCancelHint = true
+Config.CancelKey = 'BACKSPACE'
+Config.EmoteHintSeconds = 8
+Config.Walkstyles = { 'normal', 'angry' }                   -- keys from rsg-radialmenu
+Config.Shared = { Enabled = true, Distance = 3.0, --[[ see config.lua ]] }
+-- per animation (optional): Jobs = { vallaw = 0 }, Gangs = { mygang = 0 }, DutyOnly = true
+Config.LabelAliases = { ['Puke'] = 'Throw up' } -- redirect removed or renamed labels
 
 Config.Animations = {
     {
@@ -76,15 +104,15 @@ Config.Animations = {
     },
 }
 ```
-> ⚠️ `Label` must be unique. Renaming a label removes it from players' saved favourites.
+> ⚠️ `Label` must be unique. When renaming or removing one, add it to `Config.LabelAliases` to keep players' favourites.
 
 ---
 
 ## 🧩 Exports (client)
 ```lua
 -- play by label; body = 'full' (default) or 'upper'
-local ok, err = exports['rsg-animations']:PlayAnimation('Wave')
-exports['rsg-animations']:PlayAnimation('Wave', 'upper')
+local ok, err = exports['rsg-animations']:PlayAnimation('Tip hat')
+exports['rsg-animations']:PlayAnimation('Tip hat', 'upper')
 
 -- stop whatever is playing
 exports['rsg-animations']:StopAnimation()
@@ -93,7 +121,12 @@ exports['rsg-animations']:StopAnimation()
 ---
 
 ## 🕹️ Usage
-- `/anim` opens the menu, **Esc** closes it.
+- `/anim` (or your bound key) opens the menu. **Esc** clears the search, then closes. **Enter** plays the first search result.
+- Tick **Upper body only** to keep your legs free.
+- `/e tip hat`, `/e jig upper`, `/e stop`.
+- Press ✚ on an animation, then a slot. Right-click a slot to clear it. Slot keys are unbound until set in the game's key settings.
+- **Together** tab, ⇄ or `/animwith hand shake` asks the closest player. They press Enter to accept or Backspace to decline. An ignored or declined request can't be repeated at the same player for 30 seconds (`Config.Shared.DeclineCooldown`).
+- Backspace stops the current animation while the hint is showing.
 - Left-click a row to play; right-click or click the star to (un)favourite.
 - The bottom button stops the current animation.
 
@@ -106,21 +139,19 @@ CREATE TABLE IF NOT EXISTS `favorites_animations` (
   `citizenid` varchar(50) NOT NULL,
   `favorites` longtext NOT NULL DEFAULT ('[]'),
   PRIMARY KEY (`id`),
-  KEY `citizenid` (`citizenid`)
+  UNIQUE KEY `citizenid` (`citizenid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ```
-Existing installs can add the index with:
-```sql
-ALTER TABLE `favorites_animations` ADD INDEX `citizenid` (`citizenid`);
-```
-
 ---
 
 ## 🗂️ Files
 - `client/client.lua` – menu, NUI callbacks, playback & exports
+- `client/extras.lua` – quick slots, recent, cancel hint, walk styles, `/e`, radial menu
+- `client/together.lua`, `server/together.lua` – shared animations
 - `server/server.lua` – favourites storage & validation
 - `server/versionchecker.lua` – GitHub version check
-- `shared/config.lua` – command & animation list
+- `shared/config.lua` – options & animation list
+- `shared/access.lua` – job / gang rule
 - `locales/*.json` – translations
 - `ui/` – Vue.js front-end
 - `installation/rsg-animations.sql` – table
@@ -135,8 +166,4 @@ ALTER TABLE `favorites_animations` ADD INDEX `citizenid` (`citizenid`);
 
 ---
 
-Support the Project : https://rexshack.tebex.store/
-
-## Database
-
-Tables (`favorites_animations`) are created automatically on first start while `Config.AutoDatabase = true` (default); the database user needs `CREATE` permission. To install manually, set `Config.AutoDatabase = false` in the config and import `installation/rsg-animations.sql` once.
+Support: https://rexshack.tebex.store

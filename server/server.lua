@@ -9,7 +9,7 @@ MySQL.ready(function()
             `citizenid` varchar(50) NOT NULL,
             `favorites` longtext NOT NULL DEFAULT ('[]'),
             PRIMARY KEY (`id`),
-            KEY `citizenid` (`citizenid`)
+            UNIQUE KEY `citizenid` (`citizenid`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     ]])
     if ok then
@@ -31,14 +31,16 @@ end
 -- per-source cache: { citizenid, list, set, exists, last }
 -- avoids a DB read on every toggle and the read-modify-write race between rapid toggles
 local Cache = {}
+local Loading = {}
 
 local function decodeFavorites(raw)
     local ok, list = pcall(json.decode, raw or '[]')
     if not ok or type(list) ~= 'table' then return {} end
 
-    -- drop entries that no longer exist in the config (and duplicates)
+    -- redirect removed duplicates, drop unknown entries and duplicates
     local clean, seen = {}, {}
     for _, label in ipairs(list) do
+        label = Config.LabelAliases[label] or label
         if ValidLabels[label] and not seen[label] and #clean < MAX_FAVORITES then
             seen[label] = true
             clean[#clean + 1] = label
@@ -47,11 +49,26 @@ local function decodeFavorites(raw)
     return clean
 end
 
+-- returns nil if the database read failed or the character changed while it ran
 local function loadCache(src, citizenid)
+    -- only one read per player at a time, so two events can't build two caches (and insert two rows)
+    while Loading[src] do Wait(0) end
+
     local entry = Cache[src]
     if entry and entry.citizenid == citizenid then return entry end
 
-    local raw = MySQL.scalar.await('SELECT favorites FROM favorites_animations WHERE citizenid = ? LIMIT 1', { citizenid })
+    Loading[src] = true
+    local ok, raw = pcall(MySQL.scalar.await, 'SELECT favorites FROM favorites_animations WHERE citizenid = ? LIMIT 1', { citizenid })
+    Loading[src] = nil
+
+    if not ok then
+        print(('^1[rsg-animations]^7 failed to load favourites: %s'):format(tostring(raw)))
+        return nil
+    end
+
+    local Player = RSGCore.Functions.GetPlayer(src)
+    if not Player or Player.PlayerData.citizenid ~= citizenid then return nil end
+
     local list = decodeFavorites(raw)
     local set = {}
     for _, label in ipairs(list) do set[label] = true end
@@ -61,11 +78,36 @@ local function loadCache(src, citizenid)
     return entry
 end
 
+-- one write at a time per character, in order. Changes made during a write are saved by the next pass,
+-- and a failed INSERT is retried as an INSERT on the next change
+local function saveFavorites(entry)
+    entry.dirty = true
+    if entry.saving then return end
+    entry.saving = true
+
+    CreateThread(function()
+        while entry.dirty do
+            entry.dirty = false
+            local encoded = json.encode(entry.list)
+            local ok, err
+            if entry.exists then
+                ok, err = pcall(MySQL.update.await, 'UPDATE favorites_animations SET favorites = ? WHERE citizenid = ?', { encoded, entry.citizenid })
+            else
+                ok, err = pcall(MySQL.insert.await, 'INSERT INTO favorites_animations (citizenid, favorites) VALUES (?, ?)', { entry.citizenid, encoded })
+                if ok then entry.exists = true end
+            end
+            if not ok then print(('^1[rsg-animations]^7 failed to save favourites: %s'):format(tostring(err))) end
+        end
+        entry.saving = false
+    end)
+end
+
 RSGCore.Functions.CreateCallback('rsg-animations:server:getFavorites', function(source, cb)
     local Player = RSGCore.Functions.GetPlayer(source)
-    if not Player then return cb({}) end
+    if not Player then return cb(false) end -- false = try again next time
 
-    cb(loadCache(source, Player.PlayerData.citizenid).list)
+    local entry = loadCache(source, Player.PlayerData.citizenid)
+    cb(entry and entry.list or false)
 end)
 
 RegisterNetEvent('rsg-animations:server:Favorite', function(label, favorite)
@@ -76,6 +118,10 @@ RegisterNetEvent('rsg-animations:server:Favorite', function(label, favorite)
     favorite = favorite == true
 
     local entry = loadCache(src, Player.PlayerData.citizenid)
+    if not entry then
+        TriggerClientEvent('rsg-animations:client:syncFavorite', src, label, not favorite)
+        return
+    end
     if entry.set[label] == (favorite or nil) then return end -- no change
 
     local now = GetGameTimer()
@@ -88,7 +134,7 @@ RegisterNetEvent('rsg-animations:server:Favorite', function(label, favorite)
     if favorite then
         if #entry.list >= MAX_FAVORITES then
             TriggerClientEvent('rsg-animations:client:syncFavorite', src, label, false)
-            TriggerClientEvent('RSGCore:Client:Notify', src, { title = locale('ui_title'), description = locale('err_max_favorites'):format(MAX_FAVORITES), type = 'error' })
+            TriggerClientEvent('RSGCore:Client:Notify', src, { title = locale('ui_title'), description = locale('err_max_favorites', MAX_FAVORITES), type = 'error' })
             return
         end
         entry.list[#entry.list + 1] = label
@@ -100,13 +146,7 @@ RegisterNetEvent('rsg-animations:server:Favorite', function(label, favorite)
         entry.set[label] = nil
     end
 
-    local encoded = json.encode(entry.list)
-    if entry.exists then
-        MySQL.update('UPDATE favorites_animations SET favorites = ? WHERE citizenid = ?', { encoded, entry.citizenid })
-    else
-        entry.exists = true
-        MySQL.insert('INSERT INTO favorites_animations (citizenid, favorites) VALUES (?, ?)', { entry.citizenid, encoded })
-    end
+    saveFavorites(entry)
 end)
 
 AddEventHandler('playerDropped', function()

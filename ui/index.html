@@ -23,30 +23,69 @@
 
         <nav class="tabs">
           <button class="tab" :class="{ active: !selectedCategory }" @click="FilterCategory(null)">{{ Locale.all }}</button>
-          <button v-for="cat in Categories" :key="cat.key" class="tab" :class="{ active: selectedCategory === cat.key }" @click="FilterCategory(cat.key)">{{ Locale[cat.locale] }}</button>
+          <button v-for="cat in VisibleCategories" :key="cat.key" class="tab" :class="{ active: selectedCategory === cat.key }" @click="FilterCategory(cat.key)">{{ Locale[cat.locale] }}</button>
         </nav>
 
         <input type="text" v-model="searchQuery" class="search-input" ref="search" :placeholder="Locale.searchPlaceholder">
 
-        <ul class="list">
-          <li class="row" v-for="Animation in FilteredAnimations" :key="Animation.Label"
-              @click="StartAnim(Animation)" @click.right.prevent="Favorite(Animation)" :title="Locale.favoriteHint">
-            <div class="badge-icon">{{ TypeIcon(Animation.Type) }}</div>
-            <div class="row-text">
-              <span class="row-title">{{ Animation.DisplayLabel || Animation.Label }}</span>
-              <span class="row-desc">{{ CategoryLabel(Animation.Category) }}</span>
-            </div>
-            <button class="star" :class="{ on: Animation.Favorite }" @click.stop="Favorite(Animation)">&#9733;</button>
-          </li>
-          <li class="row empty" v-if="FilteredAnimations.length === 0">
+        <div class="slot-label">{{ assigning ? Locale.assignHint : Locale.quickSlots }}</div>
+        <div class="slots" :class="{ assigning: assigning }">
+          <button v-for="(label, index) in Slots" :key="index" class="slot" :class="{ filled: label }"
+              :title="label ? SlotName(label) + ' - ' + Locale.slotHint : Locale.slotHint"
+              @click="UseSlot(index)" @click.right.prevent="ClearSlot(index)">
+            <b>{{ index + 1 }}</b><small>{{ SlotName(label) }}</small>
+          </button>
+        </div>
+
+        <label class="option" v-if="selectedCategory !== 'Walk' && selectedCategory !== 'Together'">
+          <input type="checkbox" v-model="upperBody">
+          <span>{{ Locale.upperBody }}</span>
+        </label>
+
+        <p class="note" v-if="selectedCategory === 'Together'">{{ Locale.togetherHint }}</p>
+
+        <ul class="list" ref="list">
+          <template v-if="selectedCategory === 'Walk'">
+            <li class="row" v-for="walk in FilteredWalkstyles" :key="walk.key" :class="{ selected: walk.key === CurrentWalk }" @click="SetWalk(walk)">
+              <div class="badge-icon">{{ walk.key === CurrentWalk ? '\u2713' : '\u2726' }}</div>
+              <div class="row-text"><span class="row-title">{{ walk.label }}</span></div>
+            </li>
+          </template>
+          <template v-else>
+            <li class="row" v-for="Animation in FilteredAnimations" :key="Animation.Label"
+                @click="StartAnim(Animation)" @click.right.prevent="Favorite(Animation)" :title="Locale.favoriteHint">
+              <div class="badge-icon">{{ TypeIcon(Animation.Type) }}</div>
+              <div class="row-text">
+                <span class="row-title">{{ Animation.DisplayLabel || Animation.Label }}</span>
+                <span class="row-desc">{{ CategoryLabel(Animation.Category) }}</span>
+              </div>
+              <button v-if="Animation.Shared" class="mini" :title="Locale.invite" @click.stop="InvitePlayer(Animation)">&#8644;</button>
+              <button class="mini" :class="{ on: assigning === Animation.Label }" :title="Locale.assign" @click.stop="Assign(Animation)">&#10010;</button>
+              <button class="star" :class="{ on: Animation.Favorite }" @click.stop="Favorite(Animation)">&#9733;</button>
+            </li>
+          </template>
+          <li class="row empty" v-if="selectedCategory === 'Walk' ? FilteredWalkstyles.length === 0 : FilteredAnimations.length === 0">
             <span class="row-desc">{{ Locale.noResults }}</span>
           </li>
         </ul>
+
+        <p class="note playing" v-if="NowPlaying.Name">{{ Locale.nowPlaying }}: {{ NowPlaying.Name }}</p>
 
         <div class="divider"><span>&#9670;</span></div>
 
         <div class="actions">
           <button class="wood-btn" @click="StopAnim()">{{ Locale.stopAnimation }}</button>
+        </div>
+      </div>
+
+      <div class="hud">
+        <div class="hud-card" v-if="Invite.Text">
+          <p>{{ Invite.Text }}</p>
+          <small>{{ Invite.Hint }}</small>
+        </div>
+        <div class="hud-card" v-else-if="!Show && NowPlaying.Name && NowPlaying.Hint">
+          <p>{{ NowPlaying.Name }}</p>
+          <small>{{ NowPlaying.Hint }}</small>
         </div>
       </div>
     </div>
